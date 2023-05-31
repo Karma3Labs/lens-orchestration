@@ -1,8 +1,13 @@
 # Initialize a new env for Lens and Eigentrust
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 CWD=$PWD
-DEFAULT_ENV=alpha
-ENV=${1:-$DEFAULT_ENV}
+
+if [ -f ".env" ]; then
+  source .env
+  export ENV=$ENV
+fi
+
+ENV=${1:-${ENV:-alpha}}
 
 if [ -z "${1}" ]; then
   echo "Usage:   $0 [env_name]"

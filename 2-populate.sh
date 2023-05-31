@@ -1,8 +1,13 @@
 # Initialize a new env for Lens and Eigentrust
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 CWD=$PWD
-source .env
-ENV=${1:-alpha}
+
+if [ -f ".env" ]; then
+  source .env
+  export ENV=$ENV
+fi
+
+ENV=${1:-${ENV:-alpha}}
 GCS_BUCKET_NAME=${2:-${GCS_BUCKET_NAME:-"k3l-lens-bigquery-alpha"}}
 
 if [ -z "${2}" ]; then

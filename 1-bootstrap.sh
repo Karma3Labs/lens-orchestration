@@ -1,14 +1,73 @@
 # Initialize a new env for Lens and Eigentrust
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 CWD=$PWD
+
 if [ -f ".env" ]; then
   source .env
+  export ENV=$ENV
 fi
-ENV=${1:${ENV:-"alpha"}}
+
+# Check if OpenSSL is available
+if ! command -v openssl >/dev/null 2>&1; then
+  echo "OpenSSL is not found. Installing..."
+  sudo apt-get update
+  sudo apt-get install -y openssl
+  echo "OpenSSL has been installed."
+fi
+
+# Check if psql is installed
+if ! command -v psql >/dev/null 2>&1; then
+  echo "psql is not found. Installing..."
+  sudo apt-get update
+  sudo apt-get install -y postgresql-client
+  echo "psql has been installed."
+fi
+
+# Check if git is installed
+if ! command -v git >/dev/null 2>&1; then
+  echo "Git is not found. Installing..."
+  sudo apt-get update
+  sudo apt-get install -y git
+  echo "Git has been installed."
+fi
+
+# Check if Docker is installed
+if ! command -v docker >/dev/null 2>&1; then
+  echo "Docker is not found. Installing..."
+  sudo apt-get update
+  sudo apt-get install -y apt-transport-https ca-certificates curl software-properties-common
+  curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /usr/share/keyrings/docker-archive-keyring.gpg
+  echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu $(lsb_release -cs) stable" | sudo tee /etc/apt/sources.list.d/docker.list >/dev/null
+  sudo apt-get update
+  sudo apt-get install -y docker-ce docker-ce-cli containerd.io
+  echo "Docker has been installed."
+fi
+
+# Check if Docker is running
+if ! systemctl is-active --quiet docker; then
+  echo "Docker is not running. Starting Docker..."
+  sudo systemctl start docker
+  echo "Docker has been started."
+fi
+
+# Check if docker-compose is installed
+if ! command -v docker-compose >/dev/null 2>&1; then
+  echo "docker-compose is not found. Installing..."
+  # Download the latest stable release of docker-compose
+  sudo curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose
+  # Apply executable permissions
+  sudo chmod +x /usr/local/bin/docker-compose
+  echo "docker-compose has been installed."
+fi
+
+ENV=${1:-${ENV:-"alpha"}}
 EIGENTRUST_PORT=${2:-55581}
 LENS_PORT=${3:-55561}
 DB_PORT=${4:-55541}
 DB_PASSWORD=${5:-$(openssl rand -hex 16)}
+DB_USERNAME=postgres
+DB_DATA_DIR=/var/lib/postgresql/data
+RELEASE_TAG="v1.0"
 
 if [ -z "${5}" ]; then
   echo "Usage:   $0 [env_name] [comp_port] [api_port] [db_port] [db_passwd]"
@@ -26,18 +85,43 @@ if [ -z "${5}" ]; then
 fi
 
 if [ -f ".env" ]; then
-  sed -i "s/^ENV=/ENV=${ENV}/" .env
+  sed -i "s/^ENV=.*/ENV=${ENV}/" .env
+fi
+
+# Check if the current user has sudo privileges for Docker
+if sudo -n docker info >/dev/null 2>&1; then
+  echo "User has sudo privileges for Docker."
+else
+  echo "User does not have sudo privileges for Docker. Adding sudo privileges"
+  sudo groupadd docker
+  sudo usermod -aG docker $USER
+  newgrp docker
 fi
 
 mkdir -p $ENV
+
+# Retrieve repositories for compute and api layers
 git clone https://github.com/karma3labs/go-eigentrust ${ENV}/go-eigentrust
 git clone https://github.com/karma3labs/ts-lens ${ENV}/ts-lens
+
+# Make sure we're in the stable versions
+cd ${ENV}/go-eigentrust
+git fetch --tags
+git checkout -b $RELEASE_TAG $RELEASE_TAG
+cd ${CWD}
+
+cd ${ENV}/ts-lens
+git fetch --tags
+git checkout -b $RELEASE_TAG $RELEASE_TAG
+cd ${CWD}
+
+# Pull the latest postgres build from docker
 docker pull postgres
+
+cd $ENV
 
 # Get the internal IPv4 of the docker0 interface
 DOCKER_IFACE=$(ip -4 addr show docker0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
-
-cd $ENV
 
 # Default env variable setup
 cat << EOF | tee ts-lens/.env
@@ -45,7 +129,7 @@ EIGENTRUST_API=http://${DOCKER_IFACE}:${EIGENTRUST_PORT}
 GRAPHQL_API=https://api.lens.dev/
 DB_HOST=${DOCKER_IFACE}
 DB_PORT=${DB_PORT}
-DB_USERNAME=postgres
+DB_USERNAME=${DB_USERNAME}
 DB_PASSWORD=${DB_PASSWORD}
 DB_NAME=lens_bigquery
 LENS_PORT=${LENS_PORT}
@@ -54,20 +138,40 @@ EOF
 # Create a soft link
 ln -s ts-lens/.env .env
 
+# Check if the postgres user exists
+if id -u ${DB_USERNAME} >/dev/null 2>&1; then
+  echo "${DB_USERNAME} user already exists."
+else
+  echo "Creating ${DB_USERNAME} user..."
+  # Create the postgres user without a home directory and disabled password
+  sudo useradd --no-create-home --system --shell --disabled-password /bin/bash ${DB_USERNAME}
+  echo "User ${DB_USERNAME} user has been created."
+fi
+
+# Create a directory and assign ownership to the postgres user
+sudo mkdir -p $DB_DATA_DIR
+sudo chown ${DB_USERNAME}: $DB_DATA_DIR
+
+echo "Directory created and ownership assigned to postgres user."
+
+# Get the UID and GID for postgres
+POSTGRES_UIDGID=`grep ${DB_USERNAME} /etc/passwd | awk -F[:] '{print $3":"$4}'`
+
+echo "Setting up docker-compose.yml"
 # Default docker-compose.yml setup
 cat << EOF | tee docker-compose.yml
 version: '3.8'
 services:
   lens_db:
     image: postgres
-    user: "998:998"
+    user: "$POSTGRES_UIDGID"
     container_name: lens-db-${ENV}
     restart: always
     shm_size: 512MB
     ports:
       - ${DB_PORT}:5432
     volumes:
-      - /var/lib/postgresql/data:/var/lib/postgresql/data
+      - ${DB_DATA_DIR}:/var/lib/postgresql/data
     environment:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: lens_db
@@ -95,11 +199,15 @@ networks:
 EOF
 
 # Build the initial images
+echo "Building docker image go-eigentrust-${ENV}"
 docker build ${CWD}/${ENV}/go-eigentrust/. -t go-eigentrust-${ENV}
+
+echo "Building docker image ts-lens-${ENV}"
 docker build ${CWD}/${ENV}/ts-lens/. -t ts-lens-${ENV}
 
 cd $CWD
 
+echo "Executing docker-compose \"up\" detached..."
 docker-compose -f ${ENV}/docker-compose.yml up -d
 
 
