@@ -37,7 +37,7 @@ docker image rm go-eigentrust-${ENV}
 DB_DIR=$(grep PGDATA ${ENV}/docker-compose.yml |awk {'print $2'})
 if [ ! -z "$DB_DIR" ]; then
   echo "Cleaning up database files"
-#  sudo rm -fr $DB_DIR
+  sudo rm -fr $DB_DIR
 fi
 
 source ${ENV}/ts-lens/.env

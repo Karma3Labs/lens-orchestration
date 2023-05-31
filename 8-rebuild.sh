@@ -3,8 +3,6 @@ CWD=$PWD
 DEFAULT_ENV=alpha
 ENV=${1:-$DEFAULT_ENV}
 
-set -x
-
 if [ -z "${1}" ]; then
   echo "Usage:   $0 [env_name]"
   echo ""

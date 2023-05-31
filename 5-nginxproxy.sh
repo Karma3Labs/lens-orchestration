@@ -7,7 +7,7 @@ EMAIL=${3:-"ops-email-for-certbot@yourdomain.com"}
 
 
 if [ -z "${1}" ]; then
-  echo "Usage:   $0 env_name domain_name ops_email"
+  echo "Usage:   $0 [env_name] [domain_name] [ops_email]"
   echo ""
   echo "Example: $0 ${ENV} ${DOMAIN} ${EMAIL}"
   echo ""
