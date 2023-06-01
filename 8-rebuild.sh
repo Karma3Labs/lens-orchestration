@@ -58,3 +58,9 @@ echo "   To start:   docker-compose -f ${ENV}/docker-compose.yml up -d  (started
 echo "   To stop:    docker-compose -f ${ENV}/docker-compose.yml down"
 echo ""
 echo "Started via docker-compose up.  Docker rebuild complete."
+echo ""
+echo "Next up, run: $SCRIPT_DIR/4-startserver.sh"
+echo ""
+# This will not execute but display the usage, as more params are required
+$SCRIPT_DIR/4-startserver.sh
+echo ""
