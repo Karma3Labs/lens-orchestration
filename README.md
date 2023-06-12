@@ -94,6 +94,17 @@ Params:
   [ops_email]  The email address for Certbot to alert when SSL is near expiration
 ```
 
+## ./6-startupscript.sh
+To set up startup scripts on Ubuntu using systemd, this script will set one up for you
+```
+Usage:   ./6-startupscript.sh [env_name]
+
+Example: ./6-startupscript.sh alpha
+
+Params:
+  [env_name]  The environment to setup the startup scripts
+```
+
 ## ./7-update.sh
 When you find the dataset stale, you can run an update to pull in the differential between Lens BigQuery and your local Postgres database using this script
 ```
