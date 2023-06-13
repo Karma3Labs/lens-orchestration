@@ -2,6 +2,7 @@
 CWD=$PWD
 DEFAULT_ENV=alpha
 ENV=${1:-$DEFAULT_ENV}
+SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
 if [ -z "${1}" ]; then
   echo "Usage:   $0 [env_name]"

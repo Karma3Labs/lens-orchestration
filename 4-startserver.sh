@@ -47,7 +47,7 @@ echo "The Karma3Labs Lens API has started and can respond with recommendations o
 echo ""
 echo "Sample curl:"
 echo ""
-echo "  curl -qs \"http://localhost:${LENS_PORT}/profile_scores?strategy=engagement&limit=5\" | jq"
+echo "  curl -qs \"http://localhost:${LENS_PORT}/profile/scores?strategy=engagement&limit=5\" | jq"
 echo ""
 echo "(see docs at karma3labs.com site)"
 echo ""

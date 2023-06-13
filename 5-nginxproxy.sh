@@ -81,7 +81,7 @@ echo "The Karma3Labs Lens API is now fronted by nginx and can respond with recom
 echo ""
 echo "Sample curl:"
 echo ""
-echo "  curl -qs \"https://${DOMAIN}/profile_scores?strategy=engagement&limit=5\" | jq"
+echo "  curl -qs \"https://${DOMAIN}/profile/scores?strategy=engagement&limit=5\" | jq"
 echo ""
 echo "(see docs at karma3labs.com site)"
 echo ""
