@@ -1,7 +1,23 @@
-# Initialize a new env for Lens and Eigentrust
+# Tear down your services and all docker images
+SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 CWD=$PWD
-DEFAULT_ENV=alpha
-ENV=${1:-$DEFAULT_ENV}
+
+if [ -f ".env" ]; then
+  source .env
+fi
+
+if [ -f ".env.${ENV}" ] || [ -f ".env" ]; then
+  if [ -f ".env.${ENV}" ]; then
+    source ".env.${ENV}"
+  fi
+  export ENV=${ENV}
+  export PROJECT_ID=${PROJECT_ID}
+  export REGION_CODE=${REGION_CODE}
+  export GCS_BUCKET_NAME=${GCS_BUCKET_NAME}
+fi
+
+ENV=${1:-${ENV:-alpha}}
+GCS_BUCKET_NAME=${2:-${GCS_BUCKET_NAME:-"k3l-lens-bigquery-alpha"}}
 
 if [ -z "${1}" ]; then
   echo "Usage:   $0 [env_name]"

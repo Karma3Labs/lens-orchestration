@@ -1,15 +1,17 @@
 # Initialize a new env for Lens and Eigentrust
-GCS_BUCKET_NAME=${1:-"k3l-lens-bq-blue"}
-PROJECT_ID=${2:-"lens-bigquery"}
-REGION_CODE=${3:-"us-east5"}
+ENV_NAME=${1:-"production"}
+GCS_BUCKET_NAME=${2:-"k3l-lens-prod-bucket"}
+PROJECT_ID=${3:-"k3l-lens-production"}
+REGION_CODE=${4:-"us-east5"}
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 
 if [ -z "${3}" ]; then
-  echo "Usage:   $0 [bucket_name] [project_id] [region_code]"
+  echo "Usage:   $0 [env_name] [bucket_name] [project_id] [region_code]"
   echo ""
-  echo "Example: $0 ${GCS_BUCKET_NAME} ${PROJECT_ID} ${REGION_CODE}"
+  echo "Example: $0 ${ENV_NAME} ${GCS_BUCKET_NAME} ${PROJECT_ID} ${REGION_CODE}"
   echo ""
   echo "Params:"
+  echo "  [env_name]     An environment name, this will create a folder under orchestration called /[env_name] and .env.[env_name] will be created"
   echo "  [bucket_name]  Your Google Cloud Storage bucket name to store exports of Lens BigQuery dataset during ETL download"
   echo "  [project_id]   Your Google Cloud Project ID.  To create one, go to https://developers.google.com/workspace/guides/create-project"
   echo "  [region_code]  Look for your desired GCP region code at https://cloud.google.com/compute/docs/regions-zones"
@@ -42,8 +44,8 @@ fi
 # Creating a bucket, see https://cloud.google.com/storage/docs/creating-buckets#storage-create-bucket-cli
 gsutil mb -p "${PROJECT_ID}" -c "STANDARD" -l "${REGION_CODE}" -b on gs://${GCS_BUCKET_NAME}
 
-cat << EOF | tee .env
-ENV=
+cat << EOF | tee ".env.${ENV_NAME}"
+ENV="${ENV_NAME}"
 PROJECT_ID="${PROJECT_ID}"
 REGION_CODE="${REGION_CODE}"
 GCS_BUCKET_NAME="${GCS_BUCKET_NAME}"

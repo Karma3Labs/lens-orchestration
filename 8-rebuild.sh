@@ -1,8 +1,31 @@
-# Initialize a new env for Lens and Eigentrust
-CWD=$PWD
-DEFAULT_ENV=alpha
-ENV=${1:-$DEFAULT_ENV}
+# Rebuild your compute engine docker images after an update to the source files
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
+CWD=$PWD
+
+if [ -f ".env" ]; then
+  source .env
+fi
+
+if [ -f ".env.${ENV}" ] || [ -f ".env" ]; then
+  if [ -f ".env.${ENV}" ]; then
+    source ".env.${ENV}"
+  fi
+  export ENV=${ENV}
+  export PROJECT_ID=${PROJECT_ID}
+  export REGION_CODE=${REGION_CODE}
+  export GCS_BUCKET_NAME=${GCS_BUCKET_NAME}
+fi
+
+ENV=${1:-${ENV:-alpha}}
+
+SKIP_PROMPT=false
+
+for arg in "$@" 
+do
+  if [ "$arg" = "-y" ] || [ "$arg" = "--yes" ]; then
+    SKIP_PROMPT=true
+  fi
+done
 
 if [ -z "${1}" ]; then
   echo "Usage:   $0 [env_name]"
@@ -20,7 +43,12 @@ if [ ! -d "${ENV}" ]; then
   exit
 fi
 
-read -r -p "Shutdown docker instances for \"${ENV}\" and rebuild docker images? [y/N] " response
+if $SKIP_PROMPT; then
+  response="y"
+else
+  read -r -p "Shutdown docker instances for \"${ENV}\" and rebuild docker images? [y/N] " response
+fi
+
 case "$response" in
     [yY][eE][sS]|[yY])
         ;;
@@ -34,7 +62,6 @@ docker-compose -f ${ENV}/docker-compose.yml down
 echo "Cleaning up docker images"
 docker image rm ts-lens-${ENV}
 docker image rm go-eigentrust-${ENV}
-docker image rm lens-db-${ENV}
 
 cd ${ENV}/go-eigentrust
 git fetch && git pull

@@ -1,10 +1,19 @@
-# Initialize a new env for Lens and Eigentrust
+# Compute the Eigentrust values within your local database
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 CWD=$PWD
 
 if [ -f ".env" ]; then
   source .env
-  export ENV=$ENV
+fi
+
+if [ -f ".env.${ENV}" ] || [ -f ".env" ]; then
+  if [ -f ".env.${ENV}" ]; then
+    source ".env.${ENV}"
+  fi
+  export ENV=${ENV}
+  export PROJECT_ID=${PROJECT_ID}
+  export REGION_CODE=${REGION_CODE}
+  export GCS_BUCKET_NAME=${GCS_BUCKET_NAME}
 fi
 
 ENV=${1:-${ENV:-alpha}}
