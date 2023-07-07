@@ -3,7 +3,7 @@ SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 CWD=$PWD
 
 if [ -f ".env" ]; then
-  source .env
+  source ".env"
 fi
 
 if [ -f ".env.${ENV}" ] || [ -f ".env" ]; then

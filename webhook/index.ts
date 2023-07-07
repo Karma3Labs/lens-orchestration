@@ -8,8 +8,8 @@ dotenv.config();
 const app = express();
 app.use(express.json());
 
-const HOME_DIR=process.env.HOME_DIR || '/home/ubuntu/orchestration';
 const SERVICE_PORT=process.env.SERVICE_PORT || 4000;
+const HOME_DIR=process.env.HOME_DIR || '/home/ubuntu/orchestration';
 const LOG_DIR_PREFIX=process.env.LOG_DIR_PREFIX || '/var/log/lens-sandbox-';
 
 app.post('/:route', async (req, res, next) => {
@@ -28,8 +28,9 @@ app.post('/:route', async (req, res, next) => {
   } else {
     res.status(200).send('Webhook received and is processing');
 
+    process.chdir(`${HOME_DIR}`);
     const spawn = require('child_process').spawn;
-    const rebuild = spawn(`${HOME_DIR}/8-rebuild.sh`, ['sandbox-' + servicename]);
+    const rebuild = spawn(`${HOME_DIR}/8-rebuild.sh`, ['sandbox-' + servicename, '-y']);
 
     const rebuildLog = fs.createWriteStream(`${LOG_DIR_PREFIX}${servicename}/rebuild.log`, { flags: 'a' });
     rebuild.stdout.pipe(rebuildLog, { end: false });
@@ -42,6 +43,7 @@ app.post('/:route', async (req, res, next) => {
       } else {
         console.log('rebuild completed successfully, starting api server');
         
+        process.chdir(`${HOME_DIR}`);
         const startserver = spawn(`${HOME_DIR}/4-startserver.sh`, ['sandbox-' + servicename]);
         const startserverLog = fs.createWriteStream(`${LOG_DIR_PREFIX}${servicename}/startserver.log`, { flags: 'a' });
         startserver.stdout.pipe(startserverLog, { end: false });
@@ -58,7 +60,7 @@ app.post('/:route', async (req, res, next) => {
             const computeLog = fs.createWriteStream(`${LOG_DIR_PREFIX}${servicename}/compute.log`, { flags: 'a' });
             yarn.stdout.pipe(computeLog, { end: false });
             yarn.stderr.pipe(computeLog, { end: false });
-                      }
+          }
         });
       }
     });
