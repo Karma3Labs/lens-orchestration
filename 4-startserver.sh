@@ -41,7 +41,9 @@ DB_HOST_IP=$(docker inspect -f '{{range .NetworkSettings.Networks}}{{.IPAddress}
 
 # Time to repair and rebuild the ts-lens docker image
 sed -i "s/^EIGENTRUST_API=.*/EIGENTRUST_API=http:\/\/${EIGENTRUST_IP}:80/" ${ENV}/ts-lens/.env
-sed -i "s/^DB_HOST=.*/DB_HOST=${DB_HOST_IP}/" ${ENV}/ts-lens/.env
+if [ $ENVIRONMENT != 'aws' ]; then
+  sed -i "s/^DB_HOST=.*/DB_HOST=${DB_HOST_IP}/" ${ENV}/ts-lens/.env
+fi
 sed -i "s/^DB_PORT=.*/DB_PORT=5432/" ${ENV}/ts-lens/.env
 rm ${ENV}/.env
 ln -s ts-lens/.env ${ENV}/.env
