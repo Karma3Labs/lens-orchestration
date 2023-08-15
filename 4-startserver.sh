@@ -42,12 +42,13 @@ DB_HOST_PORT=${DB_PORT:-5432}
 
 # Time to repair and rebuild the ts-lens docker image
 sed -i "s/^EIGENTRUST_API=.*/EIGENTRUST_API=http:\/\/${EIGENTRUST_IP}:80/" ${ENV}/ts-lens/.env
-if [ $ENVIRONMENT != 'aws' ]; then
+if [[ -n "$ENVIRONMENT" || "$ENVIRONMENT" != "aws" ]]; then
+  echo "Updating DB_HOST to ${DB_HOST_IP}"
   sed -i "s/^DB_HOST=.*/DB_HOST=${DB_HOST_IP}/" ${ENV}/ts-lens/.env
 fi
 sed -i "s/^DB_PORT=.*/DB_PORT=${DB_HOST_PORT}/" ${ENV}/ts-lens/.env
 rm ${ENV}/.env
-ln -s ts-lens/.env ${ENV}/.env
+ln -sfn ts-lens/.env ${ENV}/.env
 
 echo "Bringing down ts-lens docker instance and repairing the ts-lens image"
 docker stop ts-lens-${ENV}
