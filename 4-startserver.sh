@@ -2,6 +2,8 @@
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 CWD=$PWD
 
+set -x
+
 if [ -f ".env" ]; then
   source ".env"
 fi
@@ -42,8 +44,8 @@ DB_HOST_PORT=${DB_PORT:-5432}
 
 # Time to repair and rebuild the ts-lens docker image
 sed -i "s/^EIGENTRUST_API=.*/EIGENTRUST_API=http:\/\/${EIGENTRUST_IP}:80/" ${ENV}/ts-lens/.env
-if [[ -n "$ENVIRONMENT" || "$ENVIRONMENT" != "aws" ]]; then
-  echo "Updating DB_HOST to ${DB_HOST_IP}"
+if [[ -z "$ENVIRONMENT" || "$ENVIRONMENT" != "aws" ]]; then
+  echo "Updating DB_HOST to ${DB_HOST_IP} and ENVIRONMENT is $ENVIRONMENT"
   sed -i "s/^DB_HOST=.*/DB_HOST=${DB_HOST_IP}/" ${ENV}/ts-lens/.env
 fi
 sed -i "s/^DB_PORT=.*/DB_PORT=${DB_HOST_PORT}/" ${ENV}/ts-lens/.env
