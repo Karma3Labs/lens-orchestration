@@ -64,7 +64,7 @@ sed -i "/^$DB_HOST:$DB_PORT:/d" $pgpass
 echo "$DB_HOST:$DB_PORT:*:$DB_USER:$DB_PASSWORD" >> $pgpass
 chmod 600 $pgpass
 
-export WORK_DIR=$CWD/$REPO
+export WORK_DIR=$CWD/$ENV/$REPO
 export GCS_BUCKET_NAME=$GCS_BUCKET_NAME
 export DB_HOST=$DB_HOST
 export DB_PORT=$DB_PORT
