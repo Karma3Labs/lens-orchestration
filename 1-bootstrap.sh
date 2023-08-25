@@ -74,6 +74,7 @@ EIGENTRUST_PORT=${2:-55581}
 LENS_PORT=${3:-55561}
 DB_PORT=${4:-55541}
 DB_PASSWORD=${5:-$(openssl rand -hex 16)}
+DB_SCHEMA=${6:-public}
 DB_USERNAME=postgres
 DB_DATA_DIR=/var/lib/postgresql/data
 RELEASE_TAG="v1.0"
@@ -81,7 +82,7 @@ RELEASE_TAG="v1.0"
 if [ -z "${5}" ]; then
   echo "Usage:   $0 [env_name] [comp_port] [api_port] [db_port] [db_passwd]"
   echo ""
-  echo "Example: $0 $ENV $EIGENTRUST_PORT $LENS_PORT $DB_PORT $DB_PASSWORD"
+  echo "Example: $0 $ENV $EIGENTRUST_PORT $LENS_PORT $DB_PORT $DB_PASSWORD $DB_SCHEMA"
   echo ""
   echo "Params:"
   echo "  [env_name]  An environment name to use, to name folders and tag docker containers"
@@ -89,6 +90,7 @@ if [ -z "${5}" ]; then
   echo "  [api_port]  The ts-lens middleware is also hosting a port on localhost, which can be proxied to external api"
   echo "  [db_port]   The database port where both the api layer will need to connect to"
   echo "  [db_passwd] The password for the postgres database admin user"
+  echo "  [db_schema] The database schema, default as 'public'"
   echo ""
   exit
 fi
@@ -136,6 +138,7 @@ DOCKER_IFACE=$(ip -4 addr show docker0 | grep -oP '(?<=inet\s)\d+(\.\d+){3}')
 cat << EOF | tee ts-lens/.env
 EIGENTRUST_API=http://${DOCKER_IFACE}:${EIGENTRUST_PORT}
 GRAPHQL_API=https://api.lens.dev/
+DB_SCHEMA=${DB_SCHEMA}
 DB_HOST=${DOCKER_IFACE}
 DB_PORT=${DB_PORT}
 DB_USERNAME=${DB_USERNAME}

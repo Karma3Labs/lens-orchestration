@@ -17,14 +17,16 @@ if [ -f ".env.${ENV}" ] || [ -f ".env" ]; then
 fi
 
 ENV=${1:-${ENV:-alpha}}
+DB_SCHEMA=${2:-${DB_SCHEMA:-public}}
 
 if [ -z "${1}" ]; then
-  echo "Usage:   $0 [env_name]"
+  echo "Usage:   $0 [env_name] [db_schema]"
   echo ""
-  echo "Example: $0 ${ENV}"
+  echo "Example: $0 ${ENV} ${DB_SCHEMA}"
   echo ""
   echo "Params:"
   echo "  [env_name]  The environment to run Eigentrust compute on"
+  echo "  [db_schema] The namespace schema to compute Eigentrust strategies on, and the DB schema to store localtrust"
   echo ""
   exit
 fi
@@ -38,7 +40,7 @@ if [ ! -f "${NPM}" ]; then
 fi
 
 cd $ENV/ts-lens
-yarn install && yarn compute
+yarn install && yarn compute ${DB_SCHEMA}
 
 cd $CWD
 
