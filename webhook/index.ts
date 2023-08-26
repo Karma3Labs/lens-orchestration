@@ -2,6 +2,7 @@ import express from 'express';
 import crypto from 'crypto';
 import dotenv from 'dotenv';
 import * as fs from 'fs';
+import * as https from "https";
 
 dotenv.config();
 
@@ -11,6 +12,8 @@ app.use(express.json());
 const SERVICE_PORT=process.env.SERVICE_PORT || 4000;
 const HOME_DIR=process.env.HOME_DIR || '/home/ubuntu/orchestration';
 const LOG_DIR_PREFIX=process.env.LOG_DIR_PREFIX || '/var/log/lens-sandbox-';
+const TELEGRAM_BOT_TOKEN=process.env.TELEGRAM_BOT_TOKEN
+const TELEGRAM_CHAT_ID=process.env.TELEGRAM_CHAT_ID
 
 app.post('/:route', async (req, res, next) => {
   const servicename = req.params.route;
@@ -60,6 +63,23 @@ app.post('/:route', async (req, res, next) => {
             const computeLog = fs.createWriteStream(`${LOG_DIR_PREFIX}${servicename}/compute.log`, { flags: 'a' });
             yarn.stdout.pipe(computeLog, { end: false });
             yarn.stderr.pipe(computeLog, { end: false });
+
+            let msg: string
+            yarn.on('close', (yarnCode: number) => {
+              if (yarnCode != 0) {
+                msg = `compute process exited with code ${yarnCode}`
+              } else {
+                msg = 'compute completed successfully'
+              }
+              console.log(msg);
+              const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`
+                                    + `/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${msg}`;
+              (async () => {
+                const response = await https.request(telegramUrl);
+                const body = await response.text();
+                console.log(body)
+              })();
+            });
           }
         });
       }
