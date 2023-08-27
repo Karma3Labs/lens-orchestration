@@ -25,10 +25,12 @@ app.post('/:route', async (req, res, next) => {
   const check = Buffer.from(digest).equals(Buffer.from(sig as string));
 
   if (!check) {
+    console.log('Error: Invalid X-Hub-Signature-256');
     res.status(403);
     res.send('Error: Invalid X-Hub-Signature-256');
     return;
   } else {
+    console.log('Webhook received and is processing');
     res.status(200).send('Webhook received and is processing');
 
     process.chdir(`${HOME_DIR}`);
