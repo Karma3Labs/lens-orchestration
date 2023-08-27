@@ -76,11 +76,11 @@ app.post('/:route', async (req, res, next) => {
               console.log(msg);
               const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`
                                     + `/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${msg}`;
-              (async () => {
-                const response = await https.request(telegramUrl);
-                const body = await response.text();
-                console.log(body)
-              })();
+              https.get(telegramUrl, (res) => {
+                console.log('statusCode:', res.statusCode);
+              }).on('error', (e) => {
+                console.error(e);
+              });
             });
           }
         });
