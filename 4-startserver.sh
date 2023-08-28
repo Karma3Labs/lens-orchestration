@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Start the API service to serve your computed dataset
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 CWD=$PWD

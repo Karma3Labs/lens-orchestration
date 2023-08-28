@@ -1,3 +1,5 @@
+#!/bin/bash
+
 # Rebuild your compute engine docker images after an update to the source files
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 CWD=$PWD
