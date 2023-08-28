@@ -15,6 +15,17 @@ const LOG_DIR_PREFIX=process.env.LOG_DIR_PREFIX || '/var/log/lens-sandbox-';
 const TELEGRAM_BOT_TOKEN=process.env.TELEGRAM_BOT_TOKEN
 const TELEGRAM_CHAT_ID=process.env.TELEGRAM_CHAT_ID
 
+function notifyTelegram(msg: string) {
+  const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`
+    + `/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${msg}`;
+  https.get(telegramUrl, (res) => {
+    console.log('statusCode:', res.statusCode);
+  }).on('error', (e) => {
+    console.error(e);
+  });
+
+}
+
 app.post('/:route', async (req, res, next) => {
   const servicename = req.params.route;
   const SECRET = process.env['WEBHOOK_SECRET_' + servicename.toUpperCase()] || process.env.WEBHOOK_SECRET as string;
@@ -30,8 +41,10 @@ app.post('/:route', async (req, res, next) => {
     res.send('Error: Invalid X-Hub-Signature-256');
     return;
   } else {
-    console.log('Webhook received and is processing');
-    res.status(200).send('Webhook received and is processing');
+    let msg = 'Webhook received and is processing';
+    console.log(msg);
+    res.status(200).send(msg);
+    notifyTelegram(msg);
 
     process.chdir(`${HOME_DIR}`);
     const spawn = require('child_process').spawn;
@@ -44,10 +57,14 @@ app.post('/:route', async (req, res, next) => {
     // Listen for close event to ensure that rebuild completes before starting api server
     rebuild.on('close', (code: number) => {
       if (code !== 0) {
-        console.log(`rebuild process exited with code ${code}`);
+        msg = `rebuild process exited with code ${code}`;
+        console.log(msg);
+        notifyTelegram(msg);
       } else {
-        console.log('rebuild completed successfully, starting api server');
-        
+        msg = 'Rebuild completed successfully, starting API server';
+        console.log(msg);
+        notifyTelegram(msg);
+
         process.chdir(`${HOME_DIR}`);
         const startserver = spawn(`${HOME_DIR}/4-startserver.sh`, ['sandbox-' + servicename]);
         const startserverLog = fs.createWriteStream(`${LOG_DIR_PREFIX}${servicename}/startserver.log`, { flags: 'a' });
@@ -56,9 +73,13 @@ app.post('/:route', async (req, res, next) => {
         
         startserver.on('close', (startserverCode: number) => {
           if (startserverCode !== 0) {
-            console.log(`startserver process exited with code ${startserverCode}`);
+            msg = `startserver process exited with code ${startserverCode}`
+            console.log(msg);
+            notifyTelegram(msg);
           } else {
-            console.log('startserver completed successfully, starting yarn compute');
+            msg = 'API server is ready, recomputing rankings'
+            console.log(msg);
+            notifyTelegram(msg);
 
             process.chdir(`${HOME_DIR}/sandbox-${servicename}/ts-lens`);
             const yarn = spawn('yarn', ['compute']);
@@ -66,21 +87,14 @@ app.post('/:route', async (req, res, next) => {
             yarn.stdout.pipe(computeLog, { end: false });
             yarn.stderr.pipe(computeLog, { end: false });
 
-            let msg: string
             yarn.on('close', (yarnCode: number) => {
               if (yarnCode != 0) {
                 msg = `compute process exited with code ${yarnCode}`
               } else {
-                msg = 'compute completed successfully'
+                msg = 'Rankings recomputed successfully'
               }
               console.log(msg);
-              const telegramUrl = `https://api.telegram.org/bot${TELEGRAM_BOT_TOKEN}`
-                                    + `/sendMessage?chat_id=${TELEGRAM_CHAT_ID}&text=${msg}`;
-              https.get(telegramUrl, (res) => {
-                console.log('statusCode:', res.statusCode);
-              }).on('error', (e) => {
-                console.error(e);
-              });
+              notifyTelegram(msg);
             });
           }
         });
