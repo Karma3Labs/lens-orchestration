@@ -4,8 +4,6 @@
 SCRIPT_DIR=$(dirname "$(readlink -f "$0")")
 CWD=$PWD
 
-set -x
-
 if [ -f ".env" ]; then
   source ".env"
 fi
