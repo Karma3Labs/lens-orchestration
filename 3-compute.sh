@@ -40,6 +40,7 @@ if [ ! -f "${NPM}" ]; then
 fi
 
 cd $ENV/ts-lens
+export NODE_OPTIONS=--max_old_space_size=6144
 yarn install && yarn compute ${DB_SCHEMA}
 
 cd $CWD

@@ -17,7 +17,7 @@ if [ -f ".env.${ENV}" ] || [ -f ".env" ]; then
 fi
 
 ENV=${1:-${ENV:-alpha}}
-GCS_BUCKET_NAME=${2:-${GCS_BUCKET_NAME:-"k3l-lens-bigquery-alpha"}}
+GCS_BUCKET_NAME=${2:-${GCS_BUCKET_NAME:-"k3l-lens-v2-alpha"}}
 IS_FULL=${3}
 
 if [ -z "${2}" ]; then
@@ -82,6 +82,6 @@ else
 fi
 
 # Refresh the views necessary for compute
-/usr/bin/psql -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -f lens-etl/refresh_materialized_view.sql
+/usr/bin/psql -e -h $DB_HOST -p $DB_PORT -U $DB_USER -d $DB_NAME -f lens-etl/refresh_materialized_view.sql
 
 echo "Environment ${ENV} is updated.  Time to run compute once more."

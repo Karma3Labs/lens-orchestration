@@ -17,7 +17,7 @@ if [ -f ".env.${ENV}" ] || [ -f ".env" ]; then
 fi
 
 ENV=${1:-${ENV:-alpha}}
-GCS_BUCKET_NAME=${2:-${GCS_BUCKET_NAME:-"k3l-lens-bigquery-alpha"}}
+GCS_BUCKET_NAME=${2:-${GCS_BUCKET_NAME:-"k3l-lens-v2-alpha"}}
 
 if [ -z "${1}" ]; then
   echo "Usage:   $0 [env_name]"
