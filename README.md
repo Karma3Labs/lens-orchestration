@@ -20,7 +20,7 @@ via the [Google Cloud Console](https://developers.google.com/workspace/guides/cr
 ```
 Usage:   ./0-cloudinit.sh [bucket_name] [project_id] [region_code]
 
-Example: ./0-cloudinit.sh k3l-lens-bq-blue lens-v2 us-east5
+Example: ./0-cloudinit.sh k3l-lens-v2-blue lens-bigquery us-east5
 
 Params:
   [bucket_name]  Your Google Cloud Storage bucket name to store exports of Lens BigQuery dataset during ETL download

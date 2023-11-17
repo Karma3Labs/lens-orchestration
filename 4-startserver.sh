@@ -62,6 +62,8 @@ cd $CWD
 echo "Restarting docker instance"
 docker-compose -f ${ENV}/docker-compose.yml up -d ts-lens
 
+LENS_PORT=$(docker inspect --format '{{ (index .NetworkSettings.Ports "8080/tcp" 0).HostPort }}' ts-lens-${ENV})
+
 echo ""
 echo "The Karma3Labs Lens API has started and can respond with recommendations on localhost:${LENS_PORT}"
 echo ""
