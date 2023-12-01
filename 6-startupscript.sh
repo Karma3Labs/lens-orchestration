@@ -57,6 +57,7 @@ WantedBy=default.target
 EOF
 
 sudo systemctl daemon-reload
+sudo systemctl enable lens-$ENV.service
 
 echo ""
 echo "To run services at startup:  sudo systemctl enable lens-$ENV"
